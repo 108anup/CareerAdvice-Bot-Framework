@@ -1,4 +1,5 @@
 ﻿using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Web;
 
 namespace CareerAdvice.Dialogs
 {
+    [LuisModel("4cffb2d7-dde5-4ae3-b931-4738e052ea46", "fa4319fe7a164a828174f45550b872b3")]
     [Serializable]
     public sealed class CareerLuisDialog : LuisDialog<object>
     {
@@ -20,7 +22,7 @@ namespace CareerAdvice.Dialogs
             { "skills" , getskills }
         };
 
-        static public string[] getedu = { "Could you tell me about your Education Background?",
+        static public string[] getedu = { "Could you tell me about your Educational Background?",
             "So what all have you done in terms of Academics till now?"
         };
         static public string[] getinterests = { "What are your interests?",
@@ -35,7 +37,8 @@ namespace CareerAdvice.Dialogs
 
         static public string[] greetings = {"Hi!",
             "Hello There!",
-            "Hey How do you do?"
+            "Hey How do you do?",
+            "At Your Service..."
         };
         static public string[] help = {"Ask me Career Advice, Tell me about Yourself :)",
             "I give Career Help, Ask me Anything"
@@ -44,31 +47,48 @@ namespace CareerAdvice.Dialogs
             "Hello There!",
             "Hey How do you do?"
         };
+        static public string[] fail = { "Sorry I could not Understand What you are Saying." };
 
 
         [LuisIntent("")]
+        [LuisIntent("None")]
         public async Task None(IDialogContext context, LuisResult result)
         {
-            string message = $"Sorry I did not understand your statement";
-            await context.PostAsync(message);
+            await context.PostAsync(getRandomString(fail));
             context.Wait(MessageReceived);
         }
 
-        [LuisIntent("education")]
-        [LuisIntent("interests")]
-        [LuisIntent("subjects")]
-        [LuisIntent("skills")]
+        [LuisIntent("greeting")]
+        public async Task Greet(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync(getRandomString(greetings));
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("end")]
+        public async Task EndConv(IDialogContext context, LuisResult result)
+        {
+            await context.PostAsync(getRandomString(endings));
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("info")]
         public async Task Process(IDialogContext context, LuisResult result)
         {
-            string[] ent = result.Entities[0].Entity;
-            string intents = result.Intents[0].Intent;
-            context.ConversationData.SetValue<string[]>(intents, ent);
-            
+            string entity_kind = "";
+            string entity = "";
+
+            for (int i = 0; i < result.Entities.Count; i++) {
+                entity_kind = result.Entities[i].Type;
+                entity = result.Entities[i].Entity;
+                context.ConversationData.SetValue<string>(entity_kind, entity);
+            }
+                        
             string s = getMessage(context, result);
 
             if (s == "")
             {
-                onComplete(context, result);
+                await onComplete(context, result);
             }
             else
             {
@@ -77,25 +97,36 @@ namespace CareerAdvice.Dialogs
             }            
         }
 
+        [LuisIntent("needanswer")]
+        public async Task onComplete(IDialogContext context, LuisResult result)
+        {
+            //TODO::
+            //-> Tockenize entities 
+            //-> Form Feature Vector
+            //-> Get Response from ML API
+
+            await context.PostAsync("");
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("feedback")]
+        public void ProcessFeedback(IDialogContext context, LuisResult result)
+        {
+            //TODO:: Process Feedback
+        }
+
         public string getMessage(IDialogContext context, LuisResult result) {
-            //Returns the Required Intents or "" if all the Intents have been acquired
+            //Returns the Required Entities or "" if all the Entities have been acquired
             string a = "";
-            string intent = "";
+            string entity = "";
             for (int i = 0; i < info.Length; i++) {
                 if (!context.ConversationData.TryGetValue(info[i], out a))
                 {
-                    intent = info[i];
+                    entity = info[i];
                     break;
                 }
             }
-            return intent;
-        }
-
-        [LuisIntent("needanswer")]
-        public async Task onComplete(IDialogContext context, LuisResult result) {
-            //TODO:: Get Response from ML API
-            await context.PostAsync("");
-            context.Wait(MessageReceived);
+            return entity;
         }
 
         public string getRandomString(string[] a) {
