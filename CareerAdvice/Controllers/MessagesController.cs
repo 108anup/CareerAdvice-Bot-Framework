@@ -7,6 +7,8 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
+using Microsoft.Bot.Builder.Dialogs;
+using CareerAdvice.Dialogs;
 
 namespace CareerAdvice
 {
@@ -21,13 +23,7 @@ namespace CareerAdvice
         {
             if (activity.Type == ActivityTypes.Message)
             {
-                ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-                // calculate something for us to return
-                int length = (activity.Text ?? string.Empty).Length;
-
-                // return our reply to the user
-                Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
-                await connector.Conversations.ReplyToActivityAsync(reply);
+                await Conversation.SendAsync(activity, () => new CareerLuisDialog());
             }
             else
             {
@@ -57,7 +53,7 @@ namespace CareerAdvice
             }
             else if (message.Type == ActivityTypes.Typing)
             {
-                // Handle knowing tha the user is typing
+                // Handle knowing that the user is typing
             }
             else if (message.Type == ActivityTypes.Ping)
             {
