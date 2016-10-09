@@ -10,7 +10,7 @@ using System.Web;
 
 namespace CareerAdvice.Dialogs
 {
-    [LuisModel("4cffb2d7-dde5-4ae3-b931-4738e052ea46", "fa4319fe7a164a828174f45550b872b3")]
+    [LuisModel("d45f9973-e944-4056-959e-c6f6a1978095", "8c49b30c27044a7ab894d3ee9be02f78")]
     [Serializable]
     public class CareerLuisDialog : LuisDialog<object>
     {
