@@ -161,9 +161,9 @@ namespace CareerAdvice.Dialogs
             int res = await getSentiment(result.Query);
             if (res == 1) {
                 MakeDBConn();
-                string bv = getBoolVector(context, result);
-                bv += ","+choiceGiven;
-                InsertRows(bv);
+                string row = getBoolVector(context, result);//Only includes the columns apart from Career Prediction
+                row += ","+choiceGiven;//add value for career prediction column
+                InsertRows(row);
             }
             await context.PostAsync("Thank you for your valuable Feedback");
             context.Wait(MessageReceived);
@@ -225,13 +225,13 @@ namespace CareerAdvice.Dialogs
             }
         }
 
-        static public void InsertRows(string boolvector)
+        static public void InsertRows(string row)
         {
             using (var command = new QC.SqlCommand())
             {
                 command.Connection = conn;
                 command.CommandType = DT.CommandType.Text;
-                command.CommandText = @"INSERT INTO [dbo].[table]  VALUES  ("+boolvector+");";
+                command.CommandText = @"INSERT INTO [dbo].[table]  VALUES  ("+row+");";
                 command.ExecuteScalar();               
             }
         }
