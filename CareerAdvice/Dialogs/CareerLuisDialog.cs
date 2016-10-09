@@ -1,9 +1,13 @@
 ﻿using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -31,7 +35,11 @@ namespace CareerAdvice.Dialogs
 
         public string[] fail = { "Sorry I could not Understand What you are Saying." };
 
-        public string[] info = { "education", "interests", "subjects", "skills" };
+        public string[] info = { "subject",
+            "education",
+            "interests"//,
+            //"skills"
+        };
 
         static public string[] getedu = { "Could you tell me about your Educational Background?",
                     "So what all have you done in terms of Academics till now?"
@@ -75,6 +83,14 @@ namespace CareerAdvice.Dialogs
         {
             int idx = getRandomString(endings);
             await context.PostAsync(endings[idx]);
+            context.Wait(MessageReceived);
+        }
+
+        [LuisIntent("help")]
+        public async Task Help(IDialogContext context, LuisResult result)
+        {
+            int idx = getRandomString(help);
+            await context.PostAsync(help[idx]);
             context.Wait(MessageReceived);
         }
 
@@ -136,9 +152,12 @@ namespace CareerAdvice.Dialogs
         [LuisIntent("feedback")]
         public async Task ProcessFeedback(IDialogContext context, LuisResult result)
         {
-            //TODO:: Process Feedback
-
-            await context.PostAsync("Updating Feedback");
+            int res = await getSentiment(result.Query);
+            if (res == 1) {
+                //TODO::
+                //Update SQL Table
+            }
+            await context.PostAsync("Thank you for your valuable Feedback");
             context.Wait(MessageReceived);
 
         }
@@ -148,6 +167,35 @@ namespace CareerAdvice.Dialogs
             Random rnd = new Random();
             int idx = rnd.Next(0, a.Length);
             return idx;
+        }
+
+        static async Task<int> getSentiment(string body)
+        {
+            var client = new HttpClient();
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+
+            // Request headers
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", "320baec5-aa3b-473f-b491-727d22a11bdc");
+
+            var uri = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment?" + queryString;
+
+            HttpResponseMessage response;
+
+            // Request body
+            byte[] byteData = Encoding.UTF8.GetBytes(body);
+
+            using (var content = new ByteArrayContent(byteData))
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                response = await client.PostAsync(uri, content);
+            }
+
+            dynamic res = JsonConvert.DeserializeObject(response.Content.ToString());
+            int score = res.Sentiment.documents.score;
+
+            if (score > 0.5)
+                return 1;
+            else return 0;
         }
     }
 }
