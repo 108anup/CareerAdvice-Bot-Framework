@@ -10,6 +10,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using QC = System.Data.SqlClient;
+using DT = System.Data;
 
 
 namespace CareerAdvice.Dialogs
@@ -18,6 +20,9 @@ namespace CareerAdvice.Dialogs
     [Serializable]
     public class CareerLuisDialog : LuisDialog<object>
     {
+        static QC.SqlConnection conn;
+        public string choiceGiven;
+
         public string[] greetings = {"Hi!",
                     "Hello There!",
                     "Hey How do you do?",
@@ -144,6 +149,7 @@ namespace CareerAdvice.Dialogs
             //-> Tockenize entities 
             //-> Form Feature Vector
             //-> Get Response from ML API
+            //-> Update choiceGiven Var
 
             await context.PostAsync("Looking");
             context.Wait(MessageReceived);
@@ -154,8 +160,10 @@ namespace CareerAdvice.Dialogs
         {
             int res = await getSentiment(result.Query);
             if (res == 1) {
-                //TODO::
-                //Update SQL Table
+                MakeDBConn();
+                string bv = getBoolVector(context, result);
+                bv += choiceGiven;
+                InsertRows(bv);
             }
             await context.PostAsync("Thank you for your valuable Feedback");
             context.Wait(MessageReceived);
@@ -196,6 +204,37 @@ namespace CareerAdvice.Dialogs
             if (score > 0.5)
                 return 1;
             else return 0;
+        }
+
+        //forms the boolean vector
+        string getBoolVector(IDialogContext context, LuisResult result) {
+            return "";
+        }
+
+        static public void MakeDBConn()
+        {
+            using (var connection = new QC.SqlConnection(
+                "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID = { your_username }; Password ={ your_password}; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
+                ))
+            {
+                connection.Open();
+                Console.WriteLine("Connected successfully.");
+
+                Console.WriteLine("Press any key to finish...");
+                Console.ReadKey(true);
+                conn = connection;
+            }
+        }
+
+        static public void InsertRows(string boolvector)
+        {
+            using (var command = new QC.SqlCommand())
+            {
+                command.Connection = conn;
+                command.CommandType = DT.CommandType.Text;
+                command.CommandText = @"INSERT INTO [dbo].[table]  VALUES  ("+boolvector+");";
+                command.ExecuteScalar();               
+            }
         }
     }
 }
