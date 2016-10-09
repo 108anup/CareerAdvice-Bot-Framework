@@ -61,9 +61,67 @@ namespace CareerAdvice.Dialogs
         public Dictionary<string, string[]> ques = new Dictionary<string, string[]>(){
                     { "education" , getedu },
                     { "interests" , getinterests},
-                    { "subjects" , getsubjects },
+                    { "subject" , getsubjects },
                     { "skills" , getskills }
                 };
+
+
+        public class StringTable
+        {
+            public string[] ColumnNames { get; set; }
+            public string[,] Values { get; set; }
+        }
+
+        static public string[] underGrad = { "BTech","B Tech","B.sc","B Sc","B.Sc","B A","B.A",
+           "B.Com","B Com","Undergrad","MBBS","Under Graduate","under grad","Undergraduate"};
+
+        static public string[,] subs = {
+            {"CSE","Computer Science","computer","computerscience" },
+            {"MNC","Maths","mathematics","Maths and computing"},
+            {"ECE","electronics","electronics and communication","communication" },
+            { "EEE","electrical","electrical","electrical"},
+            { "Civil","Civil engineering","architect","Civil"},
+            { "Mech","Mechanical engineering","mechanical","me"},
+            { "ep","physics","engineering physics","e p"},
+            { "Bio tech","biotech","biotechnology","bio technology"},
+            { "Chemical","Chemical engineering","chem","chemist"},
+            { "Eco","economics","hss","economics"},
+            { "BS","business","business studies","bs"},
+            { "MBA","management","master of business administration","administration"},
+            { "ca","chartered accountant","accountant","accounts"},
+            { "Medical","doctor","medicine","medicine"},
+            { "MBBS","MB BS","M B B S","mbbs"},
+            { "dentist","dental","dentist","dentist"},
+            { "vetnary","vet","vet","vet"},
+            { "litr","literature","reading","author"},
+            { "Cinema","film","film industry","movie"},
+            { "hss","social science","history","humanities"}
+
+        };
+
+        static public string[,] inters = {
+            {"Coding","Code","competitive coding","coding" },
+            {"study","researching","studying","research"},
+            {"machine learning","ml","m l","machinelearning" },
+            { "development","developing","dev","develop"},
+            { "puzzle","solving puzzle","solve puzzle","puzzle"},
+            { "architect","architecture","architect","architecture"},
+            { "read","to read","reading","read"},
+            { "cars","auto indusrty","automobiles","automobile"},
+            { "teach","teaching","teacher","to teach"},
+            { "management","managing","manager","manage"},
+            { "enterprenuer","business","startup","company"},
+            { "to act","actor","acting","drama"},
+            { "photo","photography","photographer","photo"},
+            { "reporter","journal","journalist","journalism"},
+            {"chef","cooking","cook","chef" },
+            { "movie","films","film","movies"},
+            { "shares","stock market","stock","stocks"},
+            { "interact","interacting","to interact","interact"},
+            { "music","songs","instrument","play"},
+            { "surgeon","operation","surgeory","surgeon"}
+
+        };
 
 
         [LuisIntent("None")]
@@ -145,24 +203,77 @@ namespace CareerAdvice.Dialogs
         [LuisIntent("needanswer")]
         public async Task onComplete(IDialogContext context, LuisResult result)
         {
-            //TODO::
             //-> Tockenize entities 
             //-> Form Feature Vector
             //-> Get Response from ML API
             //-> Update choiceGiven Var
 
-            await context.PostAsync("Looking");
+            //Tockenize and Form Feature Vector
+            int[] fv = await getBoolVector(context,result);
+
+            //Query ML API
+            var client = new HttpClient();
+
+            var scoreRequest = new
+            {
+                Inputs = new Dictionary<string, StringTable>() {
+                    {
+                        "input1",
+                        new StringTable()
+                        {
+                            ColumnNames = new string[] {"underGrad", "postGrad", "CSE", "MNC", "ECE", "EEE", "Civil", "Mech", "EP", "Biotech", "Chem", "Eco", "BS", "MBA", "Accounts", "Medical", "MBBS", "Dentist", "Vet", "Litr", "Cinema", "HSS", "Coding", "Research", "ML", "Dev", "Puzzle", "Arch", "Reading", "Autom", "Teach", "Management", "Entrepreneur", "Drama", "Photo", "Journal", "Chef", "movie", "Stocks", "interact", "music", "surgeon", "Result"},
+                            Values = new string[,] {  { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "value" },
+                                                        { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "value" }
+                                                    }
+
+                        }
+                    },
+                },
+                GlobalParameters = new Dictionary<string, string>()
+                {
+                }
+            };
+
+            string[] ML = new string[2] { "0", "1" };
+            for (int i = 0; i < 2; i++){
+                for (int j = 0; j < 42; j++){
+                    scoreRequest.Inputs["input1"].Values[i, j] = ML[fv[j]];
+                }
+            }
+
+            const string apiKey = "qmt16vqLEHioB/UvEMGmuvj6eJtUf48f0fiKujXiicQPDLXcHbXSpvp9wVqxunDASsoA5iFAbsmNPLC4WVhkgA=="; // Replace this with the API key for the web service
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            client.BaseAddress = new Uri("https://asiasoutheast.services.azureml.net/workspaces/257eee5d631f454797f6146f812c0f48/services/835a9e1a32be469dad38570a87ffbffa/execute?api-version=2.0&details=true");
+            HttpResponseMessage response = await client.PostAsJsonAsync("", scoreRequest);
+
+            if (response.IsSuccessStatusCode){
+                string result2 = await response.Content.ReadAsStringAsync();
+                await context.PostAsync("Result: " + result2);
+            }
+            else{
+                await context.PostAsync("Oops! Some error occured");
+
+                // Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
+                /*  Console.WriteLine(response.Headers.ToString());
+
+                  string responseContent = await response.Content.ReadAsStringAsync();
+                  Console.WriteLine(responseContent);*/
+            }
             context.Wait(MessageReceived);
         }
 
         [LuisIntent("feedback")]
         public async Task ProcessFeedback(IDialogContext context, LuisResult result)
         {
-            int res = await getSentiment(result.Query);
+            int res = await getSentiment(result.Query, context, result);
             if (res == 1) {
                 MakeDBConn();
-                string row = getBoolVector(context, result);//Only includes the columns apart from Career Prediction
-                row += ","+choiceGiven;//add value for career prediction column
+                int[] r = await getBoolVector(context, result);//Only includes the columns apart from Career Prediction
+                string row = "";
+                for (int i = 0; i < r.Length; i++) {
+                    row += r[i].ToString();
+                }
+                row += choiceGiven;//add value for career prediction column
                 InsertRows(row);
             }
             await context.PostAsync("Thank you for your valuable Feedback");
@@ -176,38 +287,110 @@ namespace CareerAdvice.Dialogs
             return idx;
         }
 
-        static async Task<int> getSentiment(string body)
+        static async Task<int> getSentiment(string body, IDialogContext context, LuisResult result)
         {
             var client = new HttpClient();
             var queryString = HttpUtility.ParseQueryString(string.Empty);
 
             // Request headers
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", "320baec5-aa3b-473f-b491-727d22a11bdc");
-
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", "178cce3645ad47ab9dd771267be479f9");
+            
             var uri = "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0/sentiment?" + queryString;
 
             HttpResponseMessage response;
 
             // Request body
-            byte[] byteData = Encoding.UTF8.GetBytes(body);
+            byte[] byteData = Encoding.UTF8.GetBytes("{\"documents\":[" +
+                    "{\"id\":\"1\",\"text\":\""+body+"\"},");
 
             using (var content = new ByteArrayContent(byteData))
             {
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                content.Headers.ContentType = new MediaTypeHeaderValue("text/json");
                 response = await client.PostAsync(uri, content);
             }
+            //TODO:: See how to parse Response
+            await context.PostAsync(response.Content.ToString());
+            if (response.IsSuccessStatusCode) {
+                string res_string = await response.Content.ReadAsStringAsync();
+                dynamic res = JsonConvert.DeserializeObject(res_string);
+                int score = res.Sentiment.documents.score;
 
-            dynamic res = JsonConvert.DeserializeObject(response.Content.ToString());
-            int score = res.Sentiment.documents.score;
-
-            if (score > 0.5)
-                return 1;
-            else return 0;
+                if (score > 0.5)
+                    return 1;
+            }
+            return 0;
         }
 
         //forms the boolean vector
-        string getBoolVector(IDialogContext context, LuisResult result) {
-            return "";
+        async Task<int[]> getBoolVector(IDialogContext context, LuisResult result) {
+            int[] fv = new int[42];
+            for (int i = 0; i < fv.Length; i++)
+            {
+                fv[i] = 0;
+            }
+
+            string key = "education";
+            string edu = context.ConversationData.Get<string>(key);
+            Boolean checkUnder = underGrad.Contains(edu, StringComparer.OrdinalIgnoreCase);
+
+            if (checkUnder)
+            {
+                await context.PostAsync("you are UnderGrad");
+                fv[0] = 1;
+            }
+            else
+            {
+                await context.PostAsync("you are PostGrad");
+                fv[1] = 1;
+            }
+
+            key = "subject";
+            string subj = context.ConversationData.Get<string>(key);
+
+            int id = -1;
+            for (int i = 0; i < subs.GetLength(0); i++)
+            {
+                for (int j = 0; j < subs.GetLength(1); j++)
+                {
+                    string tem = subs[i, j];
+                    if (subj.Equals(tem, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        id = i;
+                        break;
+                    }
+                }
+
+            }
+
+            if (id == -1) id = 0;
+            id += 2;
+            fv[id] = 1;
+            await context.PostAsync("you study " + subs[id - 2, 0]);
+
+            key = "interests";
+            string intr = context.ConversationData.Get<string>(key);
+
+            id = -1;
+            for (int i = 0; i < inters.GetLength(0); i++)
+            {
+                for (int j = 0; j < inters.GetLength(1); j++)
+                {
+                    string tem = inters[i, j];
+                    if (intr.Equals(tem, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        id = i;
+                        break;
+                    }
+                }
+
+            }
+
+            if (id == -1) id = 0;
+            id += 22;
+            fv[id] = 1;
+            await context.PostAsync("you are interested " + inters[id - 22, 0]);
+
+            return fv;
         }
 
         static public void MakeDBConn()
