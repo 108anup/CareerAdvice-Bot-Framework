@@ -162,12 +162,11 @@ namespace CareerAdvice.Dialogs
             if (res == 1) {
                 MakeDBConn();
                 string bv = getBoolVector(context, result);
-                bv += choiceGiven;
+                bv += ","+choiceGiven;
                 InsertRows(bv);
             }
             await context.PostAsync("Thank you for your valuable Feedback");
             context.Wait(MessageReceived);
-
         }
 
         public int getRandomString(string[] a)
@@ -214,7 +213,7 @@ namespace CareerAdvice.Dialogs
         static public void MakeDBConn()
         {
             using (var connection = new QC.SqlConnection(
-                "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID = { your_username }; Password ={ your_password}; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
+                "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
                 ))
             {
                 connection.Open();
