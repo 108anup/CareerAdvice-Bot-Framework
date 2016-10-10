@@ -95,6 +95,11 @@ namespace CareerAdvice.Dialogs
                         "I could not get you,would you please repeat"
         };
 
+        public string[] feedback = { "We would love to have your Feedback",
+                        "Did you find my advice Satisfactory?" ,
+                        "Do you have any feedback for us?"
+        };
+
         public string[] info = { "subject",
             "education",
             "interests"
@@ -371,6 +376,7 @@ namespace CareerAdvice.Dialogs
 
                 await context.PostAsync("Check out the following fields");
                 string cg = "";
+                cg = careers[sortedSc.Count - 1];
                 for (var i = sortedSc.Count - 1; i >= sortedSc.Count - 3; i--)
                 {
                     var curSc = sortedSc[i];
@@ -378,7 +384,6 @@ namespace CareerAdvice.Dialogs
                     //await context.PostAsync("SORT val " + curSc);
                     //await context.PostAsync("SORT idx " + sortedIdx[i]);
                     await context.PostAsync(careers[curIdx]);
-                    cg = careers[curIdx];
                 }
                 context.ConversationData.SetValue<string>("choiceGiven",cg);
 
@@ -396,6 +401,10 @@ namespace CareerAdvice.Dialogs
                 // This deserialization will only work if the corresponding C# classes are defined for JSON.
                 /* dynamic myresults = ser.Deserialize<dynamic>(result2);*/
                 // await context.PostAsync("JSON CHECK: " + res.Results.output1.type);
+
+                int idx = getRandomString(feedback);
+                await context.PostAsync(feedback[idx]);
+                context.Wait(MessageReceived);
             }
             else
             {
