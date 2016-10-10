@@ -264,6 +264,10 @@ namespace CareerAdvice.Dialogs
 
             //Tockenize and Form Feature Vector
             int[] fv = await getBoolVector(context,result,true);
+            if (fv == null) {
+                await Process(context, result);
+                context.Wait(MessageReceived);
+            }
 
             //Query ML API
             var client = new HttpClient();
@@ -378,25 +382,29 @@ namespace CareerAdvice.Dialogs
         public async Task ProcessFeedback(IDialogContext context, LuisResult result)
         {
             int res = await getSentiment(result.Query, context, result);
-            if (res == 1) {
+            if (res == 1)
+            {
                 int[] r = await getBoolVector(context, result);//Only includes the columns apart from Career Prediction
-                string row = "";
-                for (int i = 0; i < r.Length; i++)
+                if (r != null)
                 {
-                    row += r[i].ToString() + ",";
-                }
-                string cg;
-                if (context.ConversationData.TryGetValue("choiceGiven", out cg))
-                {
-                    row += "'"+cg+"'";//add value for career prediction column
-                    using (var connection = new QC.SqlConnection(
-                            "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
-                    ))
+                    string row = "";
+                    for (int i = 0; i < r.Length; i++)
                     {
-                        connection.Open();
-                        Console.WriteLine("Connected successfully.");
-                        InsertRows(row, connection);
-                        Console.WriteLine("Press any key to finish...");
+                        row += r[i].ToString() + ",";
+                    }
+                    string cg;
+                    if (context.ConversationData.TryGetValue("choiceGiven", out cg))
+                    {
+                        row += "'" + cg + "'";//add value for career prediction column
+                        using (var connection = new QC.SqlConnection(
+                                "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
+                        ))
+                        {
+                            connection.Open();
+                            Console.WriteLine("Connected successfully.");
+                            InsertRows(row, connection);
+                            Console.WriteLine("Press any key to finish...");
+                        }
                     }
                 }
             }
@@ -455,6 +463,10 @@ namespace CareerAdvice.Dialogs
 
         //forms the boolean vector
         async Task<int[]> getBoolVector(IDialogContext context, LuisResult result, bool verbose = false) {
+            string s = getMessage(context,result);
+            if (s != "") {
+                return null;
+            }
             int[] fv = new int[42];
             for (int i = 0; i < fv.Length; i++)
             {
