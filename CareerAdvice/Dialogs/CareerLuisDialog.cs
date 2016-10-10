@@ -404,7 +404,6 @@ namespace CareerAdvice.Dialogs
 
                 int idx = getRandomString(feedback);
                 await context.PostAsync(feedback[idx]);
-                context.Wait(MessageReceived);
             }
             else
             {
