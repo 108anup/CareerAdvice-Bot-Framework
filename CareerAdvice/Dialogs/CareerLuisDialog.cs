@@ -100,7 +100,7 @@ namespace CareerAdvice.Dialogs
             "interests"
         };
 
-        static public string[] getedu = { "are you a postgrad or underrgrad?",
+        static public string[] getedu = { "are you a postgrad or undergrad?",
                     "So what all have you done in terms of Academics till now?",
                     "tell me something about your degrees",
                     "have you done masters?"
@@ -209,6 +209,14 @@ namespace CareerAdvice.Dialogs
             context.Wait(MessageReceived);
         }
 
+        [LuisIntent("delete")]
+        public async Task Delete(IDialogContext context, LuisResult result)
+        {
+            context.ConversationData.Clear();
+            await context.PostAsync("Data Successfully Deleted!");
+            context.Wait(MessageReceived);
+        }
+
         [LuisIntent("greeting")]
         public async Task Greet(IDialogContext context, LuisResult result)
         {
@@ -230,6 +238,7 @@ namespace CareerAdvice.Dialogs
         {
             int idx = getRandomString(help);
             await context.PostAsync(help[idx]);
+            await context.PostAsync("To Delete User Data and Start Afresh just type: delete user data");
             context.Wait(MessageReceived);
         }
 
@@ -286,7 +295,7 @@ namespace CareerAdvice.Dialogs
             //-> Update choiceGiven Var
 
             //Tockenize and Form Feature Vector
-            int[] fv = await getBoolVector(context,result,true);
+            int[] fv = await getBoolVector(context,result);
             if (fv == null) {
                 await Process(context, result);
                 context.Wait(MessageReceived);
