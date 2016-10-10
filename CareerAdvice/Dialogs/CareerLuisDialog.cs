@@ -388,7 +388,7 @@ namespace CareerAdvice.Dialogs
                 string cg;
                 if (context.ConversationData.TryGetValue("choiceGiven", out cg))
                 {
-                    row += cg;//add value for career prediction column
+                    row += "'"+cg+"'";//add value for career prediction column
                     using (var connection = new QC.SqlConnection(
                             "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
                     ))
