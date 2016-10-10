@@ -145,7 +145,7 @@ namespace CareerAdvice.Dialogs
             { "Eco","economics","hss","economics"},
             { "BS","business","business studies","bs"},
             { "MBA","management","master of business administration","administration"},
-            { "ca","chartered accountant","accountant","accounts"},
+            { "ca","chartered accountant","accountant","commerce"},
             { "Medical","doctor","medicine","medicine"},
             { "MBBS","MB BS","M B B S","mbbs"},
             { "dentist","dental","dentist","dentist"},
