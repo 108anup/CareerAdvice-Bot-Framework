@@ -12,16 +12,55 @@ using System.Threading.Tasks;
 using System.Web;
 using QC = System.Data.SqlClient;
 using DT = System.Data;
-
+using System.Web.Script.Serialization;
+using System.Globalization;
 
 namespace CareerAdvice.Dialogs
 {
+    public class StringTable
+    {
+        public string[] ColumnNames { get; set; }
+        public string[,] Values { get; set; }
+    }
+    public class Value
+    {
+        public List<string> ColumnNames { get; set; }
+        public List<string> ColumnTypes { get; set; }
+        public List<List<string>> Values { get; set; }
+    }
+
+    public class Output1
+    {
+        public string type { get; set; }
+        public Value value { get; set; }
+    }
+
+    public class Results
+    {
+        public Output1 output1 { get; set; }
+    }
+
+    public class RootObject
+    {
+        public Results Results { get; set; }
+    }
+
+    public class Document
+    {
+        public double score { get; set; }
+        public string id { get; set; }
+    }
+
+    public class RootObject_Senti
+    {
+        public List<Document> documents { get; set; }
+        public List<object> errors { get; set; }
+    }
+
     [LuisModel("d45f9973-e944-4056-959e-c6f6a1978095", "8c49b30c27044a7ab894d3ee9be02f78")]
     [Serializable]
     public class CareerLuisDialog : LuisDialog<object>
     {
-        static QC.SqlConnection conn;
-        public string choiceGiven;
 
         public string[] greetings = {"Hi!",
                     "Hello There!",
@@ -42,8 +81,7 @@ namespace CareerAdvice.Dialogs
 
         public string[] info = { "subject",
             "education",
-            "interests"//,
-            //"skills"
+            "interests"
         };
 
         static public string[] getedu = { "Could you tell me about your Educational Background?",
@@ -55,22 +93,12 @@ namespace CareerAdvice.Dialogs
         static public string[] getsubjects = { "What Subjects did you take in Academics?",
                     "What all Subjects do you know?"
                 };
-        static public string[] getskills = { "What all are your skills?"
-                };
 
         public Dictionary<string, string[]> ques = new Dictionary<string, string[]>(){
                     { "education" , getedu },
                     { "interests" , getinterests},
-                    { "subject" , getsubjects },
-                    { "skills" , getskills }
+                    { "subject" , getsubjects }
                 };
-
-
-        public class StringTable
-        {
-            public string[] ColumnNames { get; set; }
-            public string[,] Values { get; set; }
-        }
 
         static public string[] underGrad = { "BTech","B Tech","B.sc","B Sc","B.Sc","B A","B.A",
            "B.Com","B Com","Undergrad","MBBS","Under Graduate","under grad","Undergraduate"};
@@ -121,6 +149,31 @@ namespace CareerAdvice.Dialogs
             { "music","songs","instrument","play"},
             { "surgeon","operation","surgeory","surgeon"}
 
+        };
+
+        //remove 2 careers
+        static public string[] careers =
+        {
+          "archaelogy",
+          "archaeology",
+          "architect",
+          "autoIndustry",
+          "consultancyServices",
+          "Critic",
+          "cryptography",
+          "Docotr",
+          "Doctor",
+          "filmIndustry",
+          "Finance",
+          "higherStudies",
+          "hotelManagement",
+          "investmentBanking",
+          "IT",
+          "journalist",
+          "MBA",
+          "Proffesor",
+          "robotics",
+          "startUp"
         };
 
 
@@ -174,6 +227,7 @@ namespace CareerAdvice.Dialogs
 
             if (s == "")
             {
+                await context.PostAsync("Let me See What I can Find for You! :)");
                 await onComplete(context, result);
             }
             else
@@ -209,7 +263,7 @@ namespace CareerAdvice.Dialogs
             //-> Update choiceGiven Var
 
             //Tockenize and Form Feature Vector
-            int[] fv = await getBoolVector(context,result);
+            int[] fv = await getBoolVector(context,result,true);
 
             //Query ML API
             var client = new HttpClient();
@@ -246,11 +300,69 @@ namespace CareerAdvice.Dialogs
             client.BaseAddress = new Uri("https://asiasoutheast.services.azureml.net/workspaces/257eee5d631f454797f6146f812c0f48/services/835a9e1a32be469dad38570a87ffbffa/execute?api-version=2.0&details=true");
             HttpResponseMessage response = await client.PostAsJsonAsync("", scoreRequest);
 
-            if (response.IsSuccessStatusCode){
+            if (response.IsSuccessStatusCode)
+            {
                 string result2 = await response.Content.ReadAsStringAsync();
-                await context.PostAsync("Result: " + result2);
+                //await context.PostAsync("Result: " + result2);
+
+                JavaScriptSerializer ser = new JavaScriptSerializer();
+
+                // This deserialization will only work if the corresponding C# classes are defined for JSON.
+                RootObject res = ser.Deserialize<RootObject>(result2);
+
+                //await context.PostAsync("JSON CHECK: " + res.Results.output1.type);
+
+                // here goes code for getting top 5
+                // CALL FEEDBACK
+
+                List<float> Scores = new List<float>();
+                for (int i = 43; i < 63; i++) // make 61 if 2 carrers removed
+                {
+                    string sc = res.Results.output1.value.Values[0][i];
+                    //await context.PostAsync("You have " + sc);
+                    float score = float.Parse(sc, CultureInfo.InvariantCulture.NumberFormat);
+                    //await context.PostAsync("You have float " + score);
+
+                    Scores.Add(score);
+                }
+                var sorted = Scores
+                            .Select((x, i) => new KeyValuePair<float, int>(x, i))
+                            .OrderBy(x => x.Key)
+                            .ToList();
+
+                List<float> sortedSc = sorted.Select(x => x.Key).ToList();
+                List<int> sortedIdx = sorted.Select(x => x.Value).ToList();
+
+                await context.PostAsync("Check out the following fields");
+                string cg = "";
+                for (var i = sortedSc.Count - 1; i >= sortedSc.Count - 3; i--)
+                {
+                    var curSc = sortedSc[i];
+                    var curIdx = sortedIdx[i];
+                    //await context.PostAsync("SORT val " + curSc);
+                    //await context.PostAsync("SORT idx " + sortedIdx[i]);
+                    await context.PostAsync(careers[curIdx]);
+                    cg = careers[curIdx];
+                }
+                context.ConversationData.SetValue<string>("choiceGiven",cg);
+
+                //REMOVE AT LAST un wanted
+                /* var jsres = JsonConvert.SerializeObject(response.Content);
+                 dynamic dynJson = JsonConvert.DeserializeObject(jsres);
+                */
+                //dynamic dynJson2 = JsonConvert.DeserializeObject(dynJson.Results);
+                /*dynamic dynJson3 = JsonConvert.DeserializeObject(dynJson2.output1);*/
+                /*
+                 dynamic res = JsonConvert.DeserializeObject(response.Content.ToString());
+                 await context.PostAsync("JSON CHECK: " + res.Results.output1.type);*/
+                //JavaScriptSerializer ser = new JavaScriptSerializer();
+                //dynamic res = JsonConvert.DeserializeObject(result2);
+                // This deserialization will only work if the corresponding C# classes are defined for JSON.
+                /* dynamic myresults = ser.Deserialize<dynamic>(result2);*/
+                // await context.PostAsync("JSON CHECK: " + res.Results.output1.type);
             }
-            else{
+            else
+            {
                 await context.PostAsync("Oops! Some error occured");
 
                 // Print the headers - they include the requert ID and the timestamp, which are useful for debugging the failure
@@ -267,14 +379,26 @@ namespace CareerAdvice.Dialogs
         {
             int res = await getSentiment(result.Query, context, result);
             if (res == 1) {
-                MakeDBConn();
                 int[] r = await getBoolVector(context, result);//Only includes the columns apart from Career Prediction
                 string row = "";
-                for (int i = 0; i < r.Length; i++) {
-                    row += r[i].ToString();
+                for (int i = 0; i < r.Length; i++)
+                {
+                    row += r[i].ToString() + ",";
                 }
-                row += choiceGiven;//add value for career prediction column
-                InsertRows(row);
+                string cg;
+                if (context.ConversationData.TryGetValue("choiceGiven", out cg))
+                {
+                    row += cg;//add value for career prediction column
+                    using (var connection = new QC.SqlConnection(
+                            "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
+                    ))
+                    {
+                        connection.Open();
+                        Console.WriteLine("Connected successfully.");
+                        InsertRows(row, connection);
+                        Console.WriteLine("Press any key to finish...");
+                    }
+                }
             }
             await context.PostAsync("Thank you for your valuable Feedback");
             context.Wait(MessageReceived);
@@ -287,7 +411,7 @@ namespace CareerAdvice.Dialogs
             return idx;
         }
 
-        static async Task<int> getSentiment(string body, IDialogContext context, LuisResult result)
+        static async Task<int> getSentiment(string body, IDialogContext context, LuisResult result, int t = 0)
         {
             var client = new HttpClient();
             var queryString = HttpUtility.ParseQueryString(string.Empty);
@@ -306,23 +430,31 @@ namespace CareerAdvice.Dialogs
             using (var content = new ByteArrayContent(byteData))
             {
                 content.Headers.ContentType = new MediaTypeHeaderValue("text/json");
-                response = await client.PostAsync(uri, content);
-            }
-            //TODO:: See how to parse Response
-            await context.PostAsync(response.Content.ToString());
-            if (response.IsSuccessStatusCode) {
-                string res_string = await response.Content.ReadAsStringAsync();
-                dynamic res = JsonConvert.DeserializeObject(res_string);
-                int score = res.Sentiment.documents.score;
+                try
+                {
+                    response = await client.PostAsync(uri, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string res_string = await response.Content.ReadAsStringAsync();
+                        JavaScriptSerializer ser = new JavaScriptSerializer();
+                        RootObject_Senti res = ser.Deserialize<RootObject_Senti>(res_string);
+                        double score = res.documents[0].score;
 
-                if (score > 0.5)
-                    return 1;
+                        if (score > 0.5)
+                            return 1;
+                    }
+                }
+                catch(HttpRequestException e){
+                    if(t<3)
+                        await getSentiment(body, context, result,t+1);
+                    //Try to connect to API 3 times if fails then no can do.
+                }
             }
             return 0;
         }
 
         //forms the boolean vector
-        async Task<int[]> getBoolVector(IDialogContext context, LuisResult result) {
+        async Task<int[]> getBoolVector(IDialogContext context, LuisResult result, bool verbose = false) {
             int[] fv = new int[42];
             for (int i = 0; i < fv.Length; i++)
             {
@@ -335,12 +467,14 @@ namespace CareerAdvice.Dialogs
 
             if (checkUnder)
             {
-                await context.PostAsync("you are UnderGrad");
+                if(verbose)
+                    await context.PostAsync("you are UnderGrad");
                 fv[0] = 1;
             }
             else
             {
-                await context.PostAsync("you are PostGrad");
+                if (verbose)
+                    await context.PostAsync("you are PostGrad");
                 fv[1] = 1;
             }
 
@@ -365,7 +499,8 @@ namespace CareerAdvice.Dialogs
             if (id == -1) id = 0;
             id += 2;
             fv[id] = 1;
-            await context.PostAsync("you study " + subs[id - 2, 0]);
+            if (verbose)
+                await context.PostAsync("you study " + subs[id - 2, 0]);
 
             key = "interests";
             string intr = context.ConversationData.Get<string>(key);
@@ -388,33 +523,19 @@ namespace CareerAdvice.Dialogs
             if (id == -1) id = 0;
             id += 22;
             fv[id] = 1;
-            await context.PostAsync("you are interested " + inters[id - 22, 0]);
+            if (verbose)
+                await context.PostAsync("you are interested " + inters[id - 22, 0]);
 
             return fv;
         }
 
-        static public void MakeDBConn()
-        {
-            using (var connection = new QC.SqlConnection(
-                "Server = tcp:careerpredicitor.database.windows.net,1433; Initial Catalog = testCarrer; Persist Security Info = False; User ID=Shivram; Password=code#123; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30;"
-                ))
-            {
-                connection.Open();
-                Console.WriteLine("Connected successfully.");
-
-                Console.WriteLine("Press any key to finish...");
-                Console.ReadKey(true);
-                conn = connection;
-            }
-        }
-
-        static public void InsertRows(string row)
+        static public void InsertRows(string row, QC.SqlConnection connection)
         {
             using (var command = new QC.SqlCommand())
             {
-                command.Connection = conn;
+                command.Connection = connection;
                 command.CommandType = DT.CommandType.Text;
-                command.CommandText = @"INSERT INTO [dbo].[table]  VALUES  ("+row+");";
+                command.CommandText = @"INSERT INTO [dbo].[Table]  VALUES  ("+row+");"; //NEED TO WORK ON THIS LINE!
                 command.ExecuteScalar();               
             }
         }
