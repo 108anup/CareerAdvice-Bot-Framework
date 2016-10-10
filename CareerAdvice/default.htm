@@ -5,8 +5,65 @@
     <meta charset="utf-8" />
 </head>
 <body style="font-family:'Segoe UI'">
-    <h1>CareerAdvice</h1>
-    <p>Describe your bot here and your terms of use etc.</p>
-    <p>Visit <a href="https://www.botframework.com/">Bot Framework</a> to register your bot. When you register it, remember to set your bot's endpoint to <pre>https://<i>your_bots_hostname</i>/api/messages</pre></p>
+    <h1>Career Adviser</h1>
+    <form class="ng-pristine ng-valid" name="form" novalidate="">
+        <div class="beginform">
+            <div class="form-group"><strong>Career Adviser Project made as a part of Code.Fun.Do Online Hackathon by Microsoft @ IIT Guwahati</strong></div>
+            <div class="form-group"><strong><label for="name">&nbsp;</label></strong></div>
+            <div class="form-group"><strong><label for="name">Team Name:&nbsp;</label></strong><label class="ng-binding" for="name">APILevelInfinite</label></div>
+            <div class="form-group">&nbsp;</div>
+            <div class="form-group"><strong><label for="name">College Name:&nbsp;</label></strong><label class="ng-binding" for="name">IIT Guwahati</label></div>
+            <div class="form-group">&nbsp;</div>
+            <div class="form-group"><strong><label for="name">Project:&nbsp;</label></strong><label class="ng-binding" for="name">Career Adviser</label></div>
+            <div class="form-group">&nbsp;</div>
+            <div class="form-group"><strong><label for="name">Project Description:</label></strong></div>
+            <div class="form-group"><label class="ng-binding" for="name">A chat Bot that Gives Career Advice, it is based on the Bot Framework. It uses LUIS to Understand the conversation Dialog and gives result based on user's educational background, skills, interests, subjects etc. The Result is computed using a Neural Network that we made using the Azure ML API, Also in the end of the conversation we take Feedback form the user which is analysed using the Text Analytics API and we use it to train the Neural Network (i.e. to create training data). (Our training data is in the form of a Dynamic SQL Table)</label></div>
+        </div>
+    </form>
+    <div>
+        <div class="tabletitle">
+            <h3>Team Members</h3>
+        </div>
+        <table class="table table-striped threads" style="width: 10px;" border="1" cellspacing="3" cellpadding="2">
+            <thead>
+                <tr>
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6"><strong>Name</strong></div>
+                    </td>
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6"><strong>Email</strong></div>
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="ng-scope">
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">Shivram Gowtham</div>
+                    </td>
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">shivramgowtham2@outlook.com</div>
+                    </td>
+                </tr>
+                <tr class="ng-scope">
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">Shivam Gupta</div>
+                    </td>
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">shivamgupta15@outlook.com</div>
+                    </td>
+                </tr>
+                <tr class="ng-scope">
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">Anup Agarwal</div>
+                    </td>
+                    <td>
+                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 ng-binding">anup108@live.in</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p>&nbsp;</p>
+        <p><strong>Bot's Endpoint:</strong> https://careeradviser.azurewebsites.net/api/messages</p>
+    </div>
 </body>
 </html>
