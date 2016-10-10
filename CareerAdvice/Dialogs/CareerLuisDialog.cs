@@ -61,37 +61,61 @@ namespace CareerAdvice.Dialogs
     [Serializable]
     public class CareerLuisDialog : LuisDialog<object>
     {
-
         public string[] greetings = {"Hi!",
                     "Hello There!",
                     "Hey How do you do?",
-                    "At Your Service..."
+                    "At Your Service...",
+                    "Hello,How’s it going? ",
+                    "Hi,How are you doing?",
+                    "Hi,Good to see you ",
+                    "Hi,Nice to see you"
                 };
 
         public string[] help = {"Ask me Career Advice, Tell me about Yourself :)",
-                    "I give Career Help, Ask me Anything"
+                    "I give Career Help, Ask me Anything",
+                    "I can asist you in finding correct Career choice",
+                    "I would be glad to help you in finding a perfect career",
+                    "I am good in predecting right Career choice.wanna try?",
+                    "i am a self learning bot to predict Career"
                 };
 
         public string[] endings = {"Bye!",
-                    "Hello There!",
-                    "Hey How do you do?"
+                    "Good Bye",
+                    "Thanks,See you later",
+                    "I am glad we got to talk",
+                    "Thank you very much for your time",
+                    "Nice to meet you.Have a nice day!",
+                    "Nice to meet you.see you soon"
                 };
 
-        public string[] fail = { "Sorry I could not Understand What you are Saying." };
+        public string[] fail = { "Sorry I could not Understand What you are Saying.",
+                        "I don’t understand this. Can you please explain it?" ,
+                        "Can you please repeat that?" ,
+                        "Sorry for that,would you please repeat",
+                        "I could not get you,would you please repeat"
+        };
 
         public string[] info = { "subject",
             "education",
             "interests"
         };
 
-        static public string[] getedu = { "Could you tell me about your Educational Background?",
-                    "So what all have you done in terms of Academics till now?"
+        static public string[] getedu = { "are you a postgrad or underrgrad?",
+                    "So what all have you done in terms of Academics till now?",
+                    "tell me something about your degrees",
+                    "have you done masters?"
                 };
         static public string[] getinterests = { "What are your interests?",
-                    "What are some of the things that you like to do"
+                    "What are some of the things that you like to do?" ,
+                    "Could you tell me about your interests?",
+                    "what are the thigs you like to do?",
+                    "what are the interests you want to pursue?"
                 };
         static public string[] getsubjects = { "What Subjects did you take in Academics?",
-                    "What all Subjects do you know?"
+                    "What all Subjects do you know?" ,
+                    "what all subjects do you learn in academics?",
+                    "Could you tell me about your subjects?",
+                    "what are the subjects you study?"
                 };
 
         public Dictionary<string, string[]> ques = new Dictionary<string, string[]>(){
@@ -99,7 +123,7 @@ namespace CareerAdvice.Dialogs
                     { "interests" , getinterests},
                     { "subject" , getsubjects }
                 };
-
+        // enrich this list
         static public string[] underGrad = { "BTech","B Tech","B.sc","B Sc","B.Sc","B A","B.A",
            "B.Com","B Com","Undergrad","MBBS","Under Graduate","under grad","Undergraduate"};
 
@@ -175,7 +199,6 @@ namespace CareerAdvice.Dialogs
           "robotics",
           "startUp"
         };
-
 
         [LuisIntent("None")]
         [LuisIntent("")]
